@@ -1,0 +1,27 @@
+# PDF Processing
+pdfplumber>=0.11.0
+pdf2image>=1.17.0
+pytesseract>=0.3.10
+Pillow>=10.0.0
+opencv-python-headless>=4.8.0
+
+# Table Transformer (deep learning table detection/structure)
+torch>=2.0.0
+torchvision>=0.15.0
+transformers>=4.40.0
+timm>=0.9.0
+
+# Embeddings & Vector DB
+sentence-transformers>=3.0.0
+fastembed>=0.3.0
+qdrant-client>=1.10.0
+
+# LLM (Groq via OpenAI-compatible API)
+openai>=1.30.0
+
+# Configuration
+python-dotenv>=1.0.0
+
+# CLI & UX
+tqdm>=4.66.0
+rich>=13.0.0

@@ -1,0 +1,1022 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Antigravity PDF RAG Hub</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Marked Markdown Parser -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <style>
+        :root {
+            --bg-gradient: linear-gradient(135deg, #0a0816 0%, #05040a 50%, #120c24 100%);
+            --panel-bg: rgba(18, 14, 38, 0.4);
+            --card-bg: rgba(255, 255, 255, 0.03);
+            --card-border: rgba(255, 255, 255, 0.06);
+            --accent-purple: #8b5cf6;
+            --accent-purple-glow: rgba(139, 92, 246, 0.35);
+            --accent-cyan: #06b6d4;
+            --accent-cyan-glow: rgba(6, 182, 212, 0.35);
+            --text-primary: #f3f4f6;
+            --text-secondary: #9ca3af;
+            --bubble-user: rgba(139, 92, 246, 0.15);
+            --bubble-assistant: rgba(255, 255, 255, 0.04);
+            --success: #10b981;
+            --danger: #ef4444;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-gradient);
+            color: var(--text-primary);
+            height: 100vh;
+            display: flex;
+            overflow: hidden;
+        }
+
+        /* --- Layout --- */
+        .app-container {
+            display: flex;
+            width: 100%;
+            height: 100%;
+            position: relative;
+        }
+
+        /* Sidebar Panel */
+        .sidebar {
+            width: 320px;
+            background: var(--panel-bg);
+            border-right: 1px solid var(--card-border);
+            backdrop-filter: blur(20px);
+            display: flex;
+            flex-direction: flex-column;
+            flex-shrink: 0;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+            overflow-y: auto;
+        }
+
+        /* Chat Panel */
+        .chat-container {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            position: relative;
+            background: rgba(0, 0, 0, 0.2);
+        }
+
+        /* --- Typography & Branding --- */
+        h1, h2, h3 {
+            font-family: 'Outfit', sans-serif;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 8px;
+        }
+
+        .brand-logo {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, var(--accent-purple), var(--accent-cyan));
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 0 15px var(--accent-purple-glow);
+        }
+
+        .brand-logo svg {
+            width: 18px;
+            height: 18px;
+            fill: #fff;
+        }
+
+        .brand-name {
+            font-size: 20px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            background: linear-gradient(to right, #ffffff, #d8b4fe);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 11px;
+            color: var(--text-secondary);
+            background: rgba(255, 255, 255, 0.05);
+            padding: 4px 10px;
+            border-radius: 20px;
+            width: fit-content;
+        }
+
+        .status-dot {
+            width: 6px;
+            height: 6px;
+            background: var(--success);
+            border-radius: 50%;
+            box-shadow: 0 0 8px var(--success);
+            animation: pulse 2s infinite;
+        }
+
+        /* --- Components --- */
+        .glass-card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 16px;
+            padding: 20px;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+        }
+
+        .glass-card:hover {
+            border-color: rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, 0.04);
+        }
+
+        .card-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #d1d5db;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* Drag-and-drop Uploader */
+        .upload-zone {
+            border: 2px dashed var(--card-border);
+            border-radius: 12px;
+            padding: 24px 16px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .upload-zone:hover, .upload-zone.dragover {
+            border-color: var(--accent-purple);
+            background: rgba(139, 92, 246, 0.04);
+            box-shadow: 0 0 15px rgba(139, 92, 246, 0.1);
+        }
+
+        .upload-icon {
+            width: 40px;
+            height: 40px;
+            stroke: var(--accent-purple);
+            margin: 0 auto 12px;
+            transition: transform 0.3s ease;
+        }
+
+        .upload-zone:hover .upload-icon {
+            transform: translateY(-4px);
+        }
+
+        .upload-text {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-bottom: 4px;
+        }
+
+        .upload-highlight {
+            color: var(--accent-purple);
+            font-weight: 500;
+        }
+
+        .upload-limit {
+            font-size: 10px;
+            color: rgba(255, 255, 255, 0.3);
+        }
+
+        #file-input {
+            display: none;
+        }
+
+        /* Checkbox & Controls */
+        .form-check {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-top: 14px;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .form-check input {
+            accent-color: var(--accent-purple);
+            cursor: pointer;
+        }
+
+        /* Info Item */
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+            font-size: 13px;
+        }
+
+        .info-row:last-child {
+            border-bottom: none;
+            padding-bottom: 0;
+        }
+
+        .info-label {
+            color: var(--text-secondary);
+        }
+
+        .info-value {
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+
+        .info-value.success {
+            color: var(--success);
+        }
+
+        /* Buttons */
+        .btn {
+            width: 100%;
+            background: transparent;
+            border: 1px solid var(--card-border);
+            color: var(--text-primary);
+            padding: 12px;
+            border-radius: 10px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn:hover {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: rgba(255, 255, 255, 0.15);
+        }
+
+        .btn-danger {
+            border-color: rgba(239, 68, 68, 0.2);
+            color: #fca5a5;
+        }
+
+        .btn-danger:hover {
+            background: rgba(239, 68, 68, 0.05);
+            border-color: var(--danger);
+            box-shadow: 0 0 10px rgba(239, 68, 68, 0.1);
+        }
+
+        /* --- Chat UI --- */
+        .chat-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--card-border);
+            background: rgba(10, 8, 22, 0.2);
+            backdrop-filter: blur(10px);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .chat-header-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .chat-header-subtitle {
+            font-size: 11px;
+            color: var(--text-secondary);
+        }
+
+        .messages-list {
+            flex-grow: 1;
+            padding: 24px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .message-row {
+            display: flex;
+            flex-direction: column;
+            max-width: 80%;
+        }
+
+        .message-row.user {
+            align-self: flex-end;
+        }
+
+        .message-row.assistant {
+            align-self: flex-start;
+        }
+
+        .message-sender {
+            font-size: 11px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            margin-bottom: 4px;
+            margin-left: 4px;
+        }
+
+        .message-row.user .message-sender {
+            text-align: right;
+            margin-right: 4px;
+            margin-left: 0;
+        }
+
+        .message-bubble {
+            padding: 14px 18px;
+            border-radius: 16px;
+            font-size: 14px;
+            line-height: 1.5;
+            word-wrap: break-word;
+            border: 1px solid var(--card-border);
+        }
+
+        .message-row.user .message-bubble {
+            background: var(--bubble-user);
+            border-color: rgba(139, 92, 246, 0.25);
+            border-bottom-right-radius: 4px;
+            color: #f3e8ff;
+        }
+
+        .message-row.assistant .message-bubble {
+            background: var(--bubble-assistant);
+            border-bottom-left-radius: 4px;
+            color: #f1f5f9;
+        }
+
+        /* Markdown Styles in Assistant bubble */
+        .message-bubble h1, .message-bubble h2, .message-bubble h3 {
+            margin: 12px 0 6px;
+            font-size: 1.1em;
+            color: #fff;
+        }
+        .message-bubble p {
+            margin-bottom: 8px;
+        }
+        .message-bubble p:last-child {
+            margin-bottom: 0;
+        }
+        .message-bubble ul, .message-bubble ol {
+            margin-left: 20px;
+            margin-bottom: 8px;
+        }
+        .message-bubble table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 12px 0;
+            font-size: 13px;
+        }
+        .message-bubble th, .message-bubble td {
+            border: 1px solid var(--card-border);
+            padding: 6px 10px;
+            text-align: left;
+        }
+        .message-bubble th {
+            background: rgba(255, 255, 255, 0.03);
+            font-weight: 600;
+        }
+
+        /* Sources detail box */
+        .sources-accordion {
+            margin-top: 8px;
+            border: 1px solid var(--card-border);
+            border-radius: 8px;
+            background: rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            font-size: 12px;
+        }
+
+        .sources-header {
+            padding: 8px 12px;
+            background: rgba(255, 255, 255, 0.02);
+            cursor: pointer;
+            user-select: none;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        .sources-header:hover {
+            background: rgba(255, 255, 255, 0.04);
+            color: var(--text-primary);
+        }
+
+        .sources-content {
+            display: none;
+            padding: 12px;
+            border-top: 1px solid var(--card-border);
+            flex-direction: column;
+            gap: 8px;
+            max-height: 250px;
+            overflow-y: auto;
+        }
+
+        .sources-accordion.open .sources-content {
+            display: flex;
+        }
+
+        .source-item {
+            padding: 8px;
+            border-radius: 6px;
+            background: rgba(255, 255, 255, 0.01);
+            border: 1px solid rgba(255, 255, 255, 0.03);
+        }
+
+        .source-meta {
+            display: flex;
+            justify-content: space-between;
+            font-size: 10px;
+            color: var(--accent-cyan);
+            margin-bottom: 4px;
+        }
+
+        .source-snippet {
+            color: var(--text-secondary);
+            font-family: monospace;
+            font-size: 11px;
+            white-space: pre-wrap;
+        }
+
+        /* Welcome Screen */
+        .welcome-screen {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            margin: auto;
+            max-width: 500px;
+            text-align: center;
+            padding: 30px;
+        }
+
+        .welcome-icon {
+            width: 60px;
+            height: 60px;
+            margin-bottom: 20px;
+            stroke: var(--accent-purple);
+            filter: drop-shadow(0 0 10px var(--accent-purple-glow));
+        }
+
+        .welcome-title {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            color: #fff;
+        }
+
+        .welcome-text {
+            font-size: 14px;
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        /* Input Bar */
+        .chat-input-bar {
+            padding: 20px 24px;
+            border-top: 1px solid var(--card-border);
+            background: rgba(10, 8, 22, 0.3);
+            backdrop-filter: blur(10px);
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .input-wrapper {
+            flex-grow: 1;
+            position: relative;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--card-border);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            padding: 4px 12px;
+            transition: all 0.3s ease;
+        }
+
+        .input-wrapper:focus-within {
+            border-color: var(--accent-purple);
+            box-shadow: 0 0 12px rgba(139, 92, 246, 0.15);
+            background: rgba(255, 255, 255, 0.04);
+        }
+
+        .chat-input {
+            flex-grow: 1;
+            background: transparent;
+            border: none;
+            color: var(--text-primary);
+            font-family: inherit;
+            font-size: 14px;
+            padding: 10px 4px;
+            outline: none;
+            resize: none;
+            max-height: 100px;
+            height: 40px;
+        }
+
+        .send-btn {
+            background: var(--accent-purple);
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 0 10px var(--accent-purple-glow);
+            flex-shrink: 0;
+        }
+
+        .send-btn:hover {
+            background: #7c3aed;
+            transform: scale(1.03);
+            box-shadow: 0 0 15px rgba(139, 92, 246, 0.5);
+        }
+
+        .send-btn svg {
+            width: 18px;
+            height: 18px;
+            fill: #fff;
+            margin-left: 2px;
+        }
+
+        /* --- Loading Overlays & Spinners --- */
+        .loader-ring {
+            display: inline-block;
+            width: 14px;
+            height: 14px;
+            border: 2px solid rgba(255,255,255,0.1);
+            border-radius: 50%;
+            border-top-color: var(--accent-cyan);
+            animation: spin 0.8s linear infinite;
+        }
+
+        .upload-overlay {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(10, 8, 22, 0.85);
+            backdrop-filter: blur(4px);
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
+            border-radius: 12px;
+            z-index: 10;
+        }
+
+        .upload-overlay-text {
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+
+        /* Animations */
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.2); opacity: 0.5; }
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar Panel -->
+        <div class="sidebar">
+            <!-- Branding -->
+            <div>
+                <div class="brand">
+                    <div class="brand-logo">
+                        <svg viewBox="0 0 24 24">
+                            <path d="M19 8H5c-1.1 0-2 .9-2 2v10c0 1.1 0.9 2 2 2h14c1.1 0 2-0.9 2-2V10c0-1.1-0.9-2-2-2zm-6 10h-2v-2h2v2zm0-4h-2V10h2v4zM12 2C6.48 2 2 6.48 2 12h2c0-4.41 3.59-8 8-8s8 3.59 8 8h2c0-5.52-4.48-10-10-10z"/>
+                        </svg>
+                    </div>
+                    <h1 class="brand-name">Antigravity RAG</h1>
+                </div>
+                <div class="status-badge">
+                    <div class="status-dot"></div>
+                    <span>Connected to Local Qdrant</span>
+                </div>
+            </div>
+
+            <!-- Upload Card -->
+            <div class="glass-card" style="position: relative;">
+                <div class="card-title">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                    <span>PDF Document Ingestion</span>
+                </div>
+                
+                <div class="upload-zone" id="drop-zone">
+                    <svg class="upload-icon" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 16.5V9.75m0 0l3 3m-3-3l-3 3M6.75 19.5a4.5 4.5 0 01-1.41-8.775 5.25 5.25 0 0110.233-2.33 3 3 0 013.758 3.848A3.752 3.752 0 0118 19.5H6.75z"></path></svg>
+                    <div class="upload-text"><span class="upload-highlight">Click to upload</span> or drag & drop</div>
+                    <div class="upload-limit">PDF files only</div>
+                    <input type="file" id="file-input" accept=".pdf">
+                </div>
+
+                <label class="form-check">
+                    <input type="checkbox" id="reset-db-check">
+                    <span>Wipe previous index before ingestion</span>
+                </label>
+
+                <!-- Loading Ingestion Overlay -->
+                <div class="upload-overlay" id="upload-overlay">
+                    <div class="loader-ring" style="width: 32px; height: 32px; border-width: 3px;"></div>
+                    <div class="upload-overlay-text" id="upload-status">Parsing & Ingesting PDF...</div>
+                </div>
+            </div>
+
+            <!-- Collection Stats Card -->
+            <div class="glass-card">
+                <div class="card-title">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9"></rect><rect x="14" y="3" width="7" height="5"></rect><rect x="14" y="12" width="7" height="9"></rect><rect x="3" y="16" width="7" height="5"></rect></svg>
+                    <span>Vector Collection Stats</span>
+                </div>
+                <div id="stats-container">
+                    <div class="info-row">
+                        <span class="info-label">Collection Name</span>
+                        <span class="info-value" id="stat-name">pdf_documents</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Status</span>
+                        <span class="info-value success" id="stat-status">Active</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Total Indexed Points</span>
+                        <span class="info-value" id="stat-points">0</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Danger Zone -->
+            <div class="glass-card" style="margin-top: auto;">
+                <div class="card-title" style="color: #fca5a5;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+                    <span>Danger Zone</span>
+                </div>
+                <button class="btn btn-danger" id="clear-db-btn">Clear Vector Index</button>
+            </div>
+        </div>
+
+        <!-- Main Chat Panel -->
+        <div class="chat-container">
+            <!-- Chat Header -->
+            <div class="chat-header">
+                <div>
+                    <div class="chat-header-title" id="active-pdf-title">RAG Conversation</div>
+                    <div class="chat-header-subtitle">Hybrid dense/sparse search matched with Groq LLM</div>
+                </div>
+            </div>
+
+            <!-- Message Thread -->
+            <div class="messages-list" id="chat-thread">
+                <!-- Welcome Screen -->
+                <div class="welcome-screen" id="welcome-screen">
+                    <svg class="welcome-icon" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 01-2.555-.337A5.972 5.972 0 015.41 20.97a5.969 5.969 0 01-.474-.065 4.48 4.48 0 00.978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25z"></path></svg>
+                    <h2 class="welcome-title">Ask Your PDF Anything</h2>
+                    <p class="welcome-text">Upload your digital or scanned PDF report in the sidebar. The system will convert tables to markdown format and index it in the Qdrant database for highly precise queries.</p>
+                </div>
+            </div>
+
+            <!-- Input Bar -->
+            <div class="chat-input-bar">
+                <div class="input-wrapper">
+                    <textarea class="chat-input" id="query-input" placeholder="Ask a question about the processed documents..." rows="1"></textarea>
+                </div>
+                <button class="send-btn" id="send-btn">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- DOM Elements ---
+        const dropZone = document.getElementById('drop-zone');
+        const fileInput = document.getElementById('file-input');
+        const resetDbCheck = document.getElementById('reset-db-check');
+        const uploadOverlay = document.getElementById('upload-overlay');
+        const uploadStatus = document.getElementById('upload-status');
+        const statsPoints = document.getElementById('stat-points');
+        const clearDbBtn = document.getElementById('clear-db-btn');
+        const activePdfTitle = document.getElementById('active-pdf-title');
+        const chatThread = document.getElementById('chat-thread');
+        const welcomeScreen = document.getElementById('welcome-screen');
+        const queryInput = document.getElementById('query-input');
+        const sendBtn = document.getElementById('send-btn');
+
+        // Backend URL (assumes server runs on same host/port)
+        const API_URL = "";
+
+        // Conversation history state
+        let chatHistory = [];
+
+        // --- Init ---
+        fetchStats();
+
+        // --- Event Listeners ---
+
+        // File Selection Click
+        dropZone.addEventListener('click', () => fileInput.click());
+
+        // File Input Change
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                handleFileUpload(e.target.files[0]);
+            }
+        });
+
+        // Drag & Drop events
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropZone.addEventListener(eventName, (e) => {
+                e.preventDefault();
+                dropZone.classList.add('dragover');
+            }, false);
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, (e) => {
+                e.preventDefault();
+                dropZone.classList.remove('dragover');
+            }, false);
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            if (files.length > 0) {
+                handleFileUpload(files[0]);
+            }
+        });
+
+        // Clear DB button click
+        clearDbBtn.addEventListener('click', async () => {
+            if (confirm("Are you sure you want to clear the entire Qdrant vector index? This cannot be undone.")) {
+                try {
+                    const res = await fetch(`${API_URL}/reset`, { method: 'POST' });
+                    const data = await res.json();
+                    if (data.success) {
+                        alert(data.message);
+                        fetchStats();
+                        // Reset history
+                        chatHistory = [];
+                        chatThread.innerHTML = "";
+                        chatThread.appendChild(welcomeScreen);
+                        welcomeScreen.style.display = 'flex';
+                    }
+                } catch (err) {
+                    console.error("Error clearing DB:", err);
+                    alert("Failed to reset database.");
+                }
+            }
+        });
+
+        // Send Button Click
+        sendBtn.addEventListener('click', submitQuery);
+
+        // Enter key in Query Input (prevent newline, submit query)
+        queryInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                submitQuery();
+            }
+        });
+
+        // --- Core Functions ---
+
+        // Fetch stats from server
+        async function fetchStats() {
+            try {
+                const res = await fetch(`${API_URL}/info`);
+                const data = await res.json();
+                if (data.success && data.info) {
+                    statsPoints.innerText = data.info.points_count ?? 0;
+                }
+            } catch (err) {
+                console.error("Error fetching stats:", err);
+            }
+        }
+
+        // Upload and Ingest PDF
+        async function handleFileUpload(file) {
+            if (!file.name.toLowerCase().endsWith('.pdf')) {
+                alert("Only PDF files are supported!");
+                return;
+            }
+
+            uploadStatus.innerText = "Saving PDF & Extracting Layout...";
+            uploadOverlay.style.display = 'flex';
+
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('reset', resetDbCheck.checked);
+
+            try {
+                const res = await fetch(`${API_URL}/upload`, {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await res.json();
+                
+                if (res.ok && data.success) {
+                    activePdfTitle.innerText = file.name;
+                    // Reset input
+                    fileInput.value = "";
+                    fetchStats();
+                    
+                    // Reset conversation history
+                    chatHistory = [];
+                    chatThread.innerHTML = "";
+                    
+                    // Add system announcement bubble
+                    appendSystemMessage(`Document successfully ingested: <strong>${file.name}</strong>. Chat history has been reset.`);
+                } else {
+                    alert(`Ingestion failed: ${data.detail || "Unknown error"}`);
+                }
+            } catch (err) {
+                console.error("Upload error:", err);
+                alert("An error occurred during file ingestion.");
+            } finally {
+                uploadOverlay.style.display = 'none';
+            }
+        }
+
+        // Submit Question
+        async function submitQuery() {
+            const question = queryInput.value.trim();
+            if (!question) return;
+
+            // Clear input box
+            queryInput.value = "";
+
+            // Hide welcome screen on first interaction
+            if (welcomeScreen) {
+                welcomeScreen.style.display = 'none';
+            }
+
+            // Append User message
+            appendMessage(question, 'user', 'You');
+
+            // Append Loading/Waiting Assistant bubble
+            const assistantRow = appendMessage(`Thinking... <div class="loader-ring" style="margin-left: 8px;"></div>`, 'assistant', 'Assistant');
+
+            try {
+                const res = await fetch(`${API_URL}/query`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ question, history: chatHistory })
+                });
+                const data = await res.json();
+
+                if (res.ok && data.success) {
+                    // Render response as parsed Markdown HTML inside assistant bubble
+                    const bubble = assistantRow.querySelector('.message-bubble');
+                    bubble.innerHTML = marked.parse(data.answer);
+
+                    // Update local chat history state
+                    chatHistory.push({ role: 'user', content: question });
+                    chatHistory.push({ role: 'assistant', content: data.answer });
+
+                    // If sources are returned, append collapsible citations list
+                    if (data.sources && data.sources.length > 0) {
+                        const sourcesHTML = renderSources(data.sources);
+                        bubble.appendChild(sourcesHTML);
+                    }
+                } else {
+                    const bubble = assistantRow.querySelector('.message-bubble');
+                    bubble.innerText = `Error: ${data.detail || "Query failed"}`;
+                }
+            } catch (err) {
+                console.error("Query error:", err);
+                const bubble = assistantRow.querySelector('.message-bubble');
+                bubble.innerText = "Query execution failed. Please ensure the backend server is running.";
+            }
+
+            // Scroll to bottom
+            chatThread.scrollTop = chatThread.scrollHeight;
+        }
+
+        // Create Chat bubble UI helper
+        function appendMessage(text, senderClass, senderName) {
+            const row = document.createElement('div');
+            row.className = `message-row ${senderClass}`;
+
+            const sender = document.createElement('div');
+            sender.className = 'message-sender';
+            sender.innerText = senderName;
+
+            const bubble = document.createElement('div');
+            bubble.className = 'message-bubble';
+            bubble.innerHTML = text; // Assumes text is pre-formatted HTML or plain text initially
+
+            row.appendChild(sender);
+            row.appendChild(bubble);
+            chatThread.appendChild(row);
+
+            // Scroll to bottom
+            chatThread.scrollTop = chatThread.scrollHeight;
+            return row;
+        }
+
+        // Create system announcement bubble
+        function appendSystemMessage(htmlText) {
+            const container = document.createElement('div');
+            container.style.display = 'flex';
+            container.style.justifyContent = 'center';
+            container.style.margin = '8px 0';
+            
+            const badge = document.createElement('div');
+            badge.style.fontSize = '12px';
+            badge.style.color = 'var(--accent-cyan)';
+            badge.style.background = 'rgba(6, 182, 212, 0.08)';
+            badge.style.border = '1px solid rgba(6, 182, 212, 0.2)';
+            badge.style.padding = '8px 16px';
+            badge.style.borderRadius = '10px';
+            badge.style.textAlign = 'center';
+            badge.innerHTML = htmlText;
+
+            container.appendChild(badge);
+            chatThread.appendChild(container);
+            chatThread.scrollTop = chatThread.scrollHeight;
+        }
+
+        // Render citations list helper
+        function renderSources(sources) {
+            const accordion = document.createElement('div');
+            accordion.className = 'sources-accordion';
+
+            const header = document.createElement('div');
+            header.className = 'sources-header';
+            header.innerHTML = `<span>Sources & Citations (${sources.length})</span> <span>▼</span>`;
+            
+            const content = document.createElement('div');
+            content.className = 'sources-content';
+
+            sources.forEach((src, idx) => {
+                const item = document.createElement('div');
+                item.className = 'source-item';
+
+                const docName = src.source_doc ? src.source_doc.split('/').pop() : "Unknown Document";
+                const meta = document.createElement('div');
+                meta.className = 'source-meta';
+                meta.innerHTML = `<span>#${idx + 1} | ${docName} (Page ${src.page_num})</span> <span>Score: ${src.score.toFixed(4)}</span>`;
+
+                const snippet = document.createElement('div');
+                snippet.className = 'source-snippet';
+                snippet.innerText = src.text;
+
+                item.appendChild(meta);
+                item.appendChild(snippet);
+                content.appendChild(item);
+            });
+
+            accordion.appendChild(header);
+            accordion.appendChild(content);
+
+            // Toggle Open/Close
+            header.addEventListener('click', (e) => {
+                e.stopPropagation();
+                accordion.classList.toggle('open');
+                const chevron = header.querySelector('span:last-child');
+                chevron.innerText = accordion.classList.contains('open') ? '▲' : '▼';
+            });
+
+            return accordion;
+        }
+    </script>
+</body>
+</html>

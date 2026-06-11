@@ -1,0 +1,32 @@
+# Environment & secrets
+.env
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg-info/
+dist/
+build/
+
+# Virtual environment
+20lpavenv/
+venv/
+.venv/
+
+# Qdrant local storage
+qdrant_data/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Model cache
+models_cache/
