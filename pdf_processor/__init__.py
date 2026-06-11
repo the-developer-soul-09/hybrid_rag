@@ -1,1 +1,1 @@
-"""PDF processor package — handles digital and scanned PDF pages."""
+"""PDF processor package — digital PDF extraction only."""

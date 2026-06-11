@@ -1,0 +1,17 @@
+.git
+.env
+.gitignore
+20lpavenv/
+__pycache__/
+*.pyc
+*.pyo
+uploads/
+processed/
+scratch/
+main.py
+setup.sh
+*.pdf
+*.txt
+*.md
+key.json
+Data_Overview_Report.pdf
