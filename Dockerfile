@@ -21,11 +21,12 @@ COPY config.py .
 COPY pdf_processor/ ./pdf_processor/
 COPY static/ ./static/
 
-# Create uploads directory
-RUN mkdir -p uploads
-
 # Create non-root user for security
 RUN adduser --disabled-password --no-create-home appuser
+
+# Create uploads directory and give appuser ownership
+RUN mkdir -p uploads && chown -R appuser:appuser uploads
+
 USER appuser
 
 # Cloud Run injects PORT env var — default to 8080
