@@ -8,8 +8,7 @@ env:
   PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
   REGION: asia-south1
   SERVICE_NAME: chatdoc-api
-  IMAGE: gcr.io/${{ secrets.GCP_PROJECT_ID }}/chatdoc-api
-
+  IMAGE: asia-south1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/chatdoc-api/chatdoc-api
 jobs:
   deploy:
     name: Build & Deploy
@@ -27,8 +26,8 @@ jobs:
       - name: Set up gcloud
         uses: google-github-actions/setup-gcloud@v2
 
-      - name: Configure Docker for GCR
-        run: gcloud auth configure-docker --quiet
+      - name: Configure Docker for Artifact Registry
+        run: gcloud auth configure-docker asia-south1-docker.pkg.dev --quiet
 
       - name: Build Docker image
         run: docker build -t ${{ env.IMAGE }}:${{ github.sha }} -t ${{ env.IMAGE }}:latest .
