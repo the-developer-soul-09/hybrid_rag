@@ -31,3 +31,4 @@ Thumbs.db
 # Model cache
 models_cache/
 key.json
+.claude/
